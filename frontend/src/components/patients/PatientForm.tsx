@@ -62,6 +62,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
                 fullWidth
                 required
                 defaultValue={editingPatient?.cpf || ''}
+                helperText="Format: 000.000.000-00"
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -83,6 +84,7 @@ const PatientForm: React.FC<PatientFormProps> = ({
                 fullWidth
                 required
                 defaultValue={editingPatient?.phone || ''}
+                helperText="Format: (00) 00000-0000"
               />
             </Grid>
             <Grid item xs={12}>

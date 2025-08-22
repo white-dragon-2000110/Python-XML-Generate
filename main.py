@@ -5,7 +5,7 @@ import uvicorn
 import os
 from dotenv import load_dotenv
 
-from api.routes import health_insurance, claims, providers, patients
+from api.routes import health_insurance, claims, providers, patients, health_plans
 from models.database import engine, Base
 from services.xml_generator import TISSXMLGenerator
 from middleware import (
@@ -28,17 +28,22 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS middleware
+# CORS middleware - MUST be added FIRST, before any other middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Logging middleware
-app.add_middleware(LoggingMiddleware)
+@app.middleware("http")
+async def add_cors_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
 
 # Create database tables
 @app.on_event("startup")
@@ -63,6 +68,7 @@ app.include_router(health_insurance.router, prefix="/api/health-insurance", tags
 app.include_router(claims.router, prefix="/api/claims", tags=["Claims"])
 app.include_router(providers.router, prefix="/api/providers", tags=["Providers"])
 app.include_router(patients.router, prefix="/api/patients", tags=["Patients"])
+app.include_router(health_plans.router, prefix="/api/health-plans", tags=["Health Plans"])
 
 # Exception handlers
 @app.exception_handler(ValidationError)

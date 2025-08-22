@@ -11,8 +11,8 @@ class Claim(Base):
     patient_id = Column(Integer, ForeignKey("patients.id", ondelete="CASCADE"), nullable=False, index=True)
     provider_id = Column(Integer, ForeignKey("providers.id", ondelete="CASCADE"), nullable=False, index=True)
     plan_id = Column(Integer, ForeignKey("health_plans.id", ondelete="CASCADE"), nullable=False, index=True)
-    procedure_code = Column(String(20), nullable=False, index=True)
-    diagnosis_code = Column(String(20), nullable=False, index=True)
+    procedure_code = Column(String(20), nullable=True, index=True)
+    diagnosis_code = Column(String(20), nullable=True, index=True)
     claim_date = Column(Date, nullable=False, index=True)
     value = Column(Numeric(10, 2), nullable=False, index=True)
     description = Column(Text, nullable=True)
@@ -49,12 +49,12 @@ class Claim(Base):
         
         # Constraints
         CheckConstraint("value > 0", name='valid_claim_value'),
-        CheckConstraint("claim_date <= CURDATE()", name='valid_claim_date'),
+        # Note: claim_date validation removed - MySQL doesn't support CURDATE() in CHECK constraints
         CheckConstraint("status IN ('pending', 'approved', 'denied', 'paid')", name='valid_claim_status'),
-        CheckConstraint("LENGTH(procedure_code) >= 3", name='valid_procedure_code_length'),
-        CheckConstraint("LENGTH(diagnosis_code) >= 3", name='valid_diagnosis_code_length'),
-        CheckConstraint("procedure_code REGEXP '^[A-Z0-9\\-]+$'", name='valid_procedure_code_format'),
-        CheckConstraint("diagnosis_code REGEXP '^[A-Z0-9\\-]+$'", name='valid_diagnosis_code_format'),
+        CheckConstraint("procedure_code IS NULL OR LENGTH(procedure_code) >= 3", name='valid_procedure_code_length'),
+        CheckConstraint("diagnosis_code IS NULL OR LENGTH(diagnosis_code) >= 3", name='valid_diagnosis_code_length'),
+        CheckConstraint("procedure_code IS NULL OR procedure_code REGEXP '^[A-Z0-9\\-]+$'", name='valid_procedure_code_format'),
+        CheckConstraint("diagnosis_code IS NULL OR diagnosis_code REGEXP '^[A-Z0-9\\-]+$'", name='valid_diagnosis_code_format'),
     )
     
     def __repr__(self):

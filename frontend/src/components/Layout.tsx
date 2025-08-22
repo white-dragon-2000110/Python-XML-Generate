@@ -84,7 +84,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   )
 
   return (
-    <Box sx={{ display: 'flex' }}python>
+    <Box sx={{ display: 'flex' }}>
       <AppBar
         position="fixed"
         sx={{

@@ -36,8 +36,7 @@ class Patient(Base):
         # Constraints
         CheckConstraint("cpf REGEXP '^[0-9]{3}\\.[0-9]{3}\\.[0-9]{3}-[0-9]{2}$'", name='valid_cpf_format'),
         CheckConstraint("email REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'", name='valid_email_format'),
-        CheckConstraint("phone REGEXP '^[+]?[0-9\\s\\(\\)\\-]+$'", name='valid_phone_format'),
-        CheckConstraint("birth_date <= CURDATE()", name='valid_birth_date'),
+        # Phone validation removed - MySQL regex constraints can be problematic
         CheckConstraint("LENGTH(name) >= 2", name='valid_name_length'),
         CheckConstraint("LENGTH(address) >= 10", name='valid_address_length'),
     )

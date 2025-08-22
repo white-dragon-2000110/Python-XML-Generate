@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Index, CheckConstraint, Enum
+from sqlalchemy import Column, Integer, String, Text, Index, CheckConstraint, Enum, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -20,7 +20,6 @@ class ProviderType(enum.Enum):
 
 class Provider(Base):
     __tablename__ = "providers"
-    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     name = Column(String(255), nullable=False, index=True)
@@ -31,14 +30,16 @@ class Provider(Base):
     phone = Column(String(20), nullable=True)
     email = Column(String(255), nullable=True, index=True)
     website = Column(String(255), nullable=True)
-    active = Column(String(5), default="true", nullable=False, index=True)  # true/false
+    active = Column(Boolean, default=True, nullable=False, index=True)
     created_at = Column(String(26), default=func.now())
     updated_at = Column(String(26), default=func.now(), onupdate=func.now())
     
     # Relationships
     claims = relationship("Claim", back_populates="provider", cascade="all, delete-orphan")
+    contracts = relationship("Contract", back_populates="provider")
+    professionals = relationship("Professional", back_populates="provider")
     
-    # Indexes
+    # Indexes and Constraints
     __table_args__ = (
         Index('idx_providers_cnpj', 'cnpj'),
         Index('idx_providers_name', 'name'),
@@ -57,7 +58,7 @@ class Provider(Base):
         CheckConstraint("email IS NULL OR email REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'", name='valid_email_format'),
         CheckConstraint("phone IS NULL OR phone REGEXP '^[+]?[0-9\\s\\(\\)\\-]+$'", name='valid_phone_format'),
         CheckConstraint("website IS NULL OR website REGEXP '^https?://[^\\s/$.?#].[^\\s]*$'", name='valid_website_format'),
-        CheckConstraint("active IN ('true', 'false')", name='valid_active_value'),
+        # No constraint needed for boolean field
         CheckConstraint("LENGTH(name) >= 3", name='valid_name_length'),
         CheckConstraint("LENGTH(address) >= 10", name='valid_address_length'),
         CheckConstraint("LENGTH(contact) >= 5", name='valid_contact_length'),

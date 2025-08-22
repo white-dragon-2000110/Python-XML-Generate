@@ -31,9 +31,9 @@ interface Claim {
   id: number
   patient_id: number
   provider_id: number
-  claim_number: string
+  plan_id: number
   claim_date: string
-  total_amount: string
+  value: number
   status: string
 }
 
@@ -47,12 +47,18 @@ interface Provider {
   name: string
 }
 
+interface HealthPlan {
+  id: number
+  name: string
+}
+
 const Claims: React.FC = () => {
   const [open, setOpen] = useState(false)
   const [editingClaim, setEditingClaim] = useState<Claim | null>(null)
   const [claims, setClaims] = useState<Claim[]>([])
   const [patients, setPatients] = useState<Patient[]>([])
   const [providers, setProviders] = useState<Provider[]>([])
+  const [healthPlans, setHealthPlans] = useState<HealthPlan[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -84,15 +90,17 @@ const Claims: React.FC = () => {
       setError(null)
       
       // Fetch all data in parallel
-      const [claimsRes, patientsRes, providersRes] = await Promise.all([
+      const [claimsRes, patientsRes, providersRes, healthPlansRes] = await Promise.all([
         apiRequest(API_ENDPOINTS.CLAIMS),
         apiRequest(API_ENDPOINTS.PATIENTS),
         apiRequest(API_ENDPOINTS.PROVIDERS),
+        apiRequest(API_ENDPOINTS.HEALTH_PLANS),
       ])
       
       setClaims(claimsRes.items || [])
       setPatients(patientsRes.items || [])
       setProviders(providersRes.items || [])
+      setHealthPlans(healthPlansRes.items || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load claims')
       console.error('Error loading claims:', err)
@@ -123,11 +131,10 @@ const Claims: React.FC = () => {
         </Typography>
       )
     },
-    { field: 'claim_number', headerName: 'Claim Number', width: 150 },
     { field: 'claim_date', headerName: 'Claim Date', width: 120 },
     { 
-      field: 'total_amount', 
-      headerName: 'Total Amount', 
+      field: 'value', 
+      headerName: 'Claim Value', 
       width: 120,
       valueFormatter: (params) => {
         if (params.value) {
@@ -226,13 +233,26 @@ const Claims: React.FC = () => {
       setSubmitting(true)
       setError(null)
       
+      // Basic validation
+      const patient_id = formData.get('patient_id') as string
+      const provider_id = formData.get('provider_id') as string
+      const plan_id = formData.get('plan_id') as string
+      const claim_date = formData.get('claim_date') as string
+      const value = formData.get('value') as string
+      const status = formData.get('status') as string
+
+      // Validate required fields
+      if (!patient_id || !provider_id || !plan_id || !claim_date || !value) {
+        throw new Error('All required fields must be filled')
+      }
+
       const claimData = {
-        patient_id: parseInt(formData.get('patient_id') as string),
-        provider_id: parseInt(formData.get('provider_id') as string),
-        claim_number: formData.get('claim_number') as string,
-        claim_date: formData.get('claim_date') as string,
-        total_amount: formData.get('total_amount') as string,
-        status: formData.get('status') as string,
+        patient_id: parseInt(patient_id),
+        provider_id: parseInt(provider_id),
+        plan_id: parseInt(plan_id),
+        claim_date,
+        value: parseFloat(value),
+        status,
       }
       
       if (editingClaim) {
@@ -351,6 +371,22 @@ const Claims: React.FC = () => {
                 </FormControl>
               </Grid>
               <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required>
+                  <InputLabel>Health Plan</InputLabel>
+                  <Select
+                    name="plan_id"
+                    label="Health Plan"
+                    defaultValue={editingClaim?.plan_id || ''}
+                  >
+                    {healthPlans.map((plan) => (
+                      <MenuItem key={plan.id} value={plan.id}>
+                        {plan.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   name="claim_date"
                   label="Claim Date"
@@ -363,24 +399,15 @@ const Claims: React.FC = () => {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  name="claim_number"
-                  label="Claim Number"
-                  placeholder="Enter claim number"
-                  fullWidth
-                  required
-                  defaultValue={editingClaim?.claim_number || ''}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  name="total_amount"
-                  label="Total Amount"
+                  name="value"
+                  label="Claim Value"
                   placeholder="0.00"
                   type="number"
                   fullWidth
                   required
-                  defaultValue={editingClaim?.total_amount || ''}
+                  defaultValue={editingClaim?.value || ''}
                   inputProps={{ step: 0.01, min: 0 }}
+                  helperText="Claim amount in decimal format"
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -417,7 +444,7 @@ const Claims: React.FC = () => {
          </DialogTitle>
          <DialogContent>
            <Typography>
-             Are you sure you want to delete claim <strong>#{claimToDelete?.claim_number}</strong>?
+                           Are you sure you want to delete claim <strong>#{claimToDelete?.id}</strong>?
            </Typography>
            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
              This action cannot be undone.

@@ -14,6 +14,10 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material'
 import {
   Add as AddIcon,
@@ -43,6 +47,19 @@ const Providers: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [providerToDelete, setProviderToDelete] = useState<Provider | null>(null)
+
+  // Provider type options
+  const providerTypes = [
+    'hospital',
+    'clinic',
+    'laboratory',
+    'imaging_center',
+    'specialist',
+    'general_practitioner',
+    'pharmacy',
+    'ambulance',
+    'other'
+  ]
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -124,13 +141,18 @@ const Providers: React.FC = () => {
     try {
       setSubmitting(true)
       setError(null)
+      
+      // Delete the provider
       await apiRequest(`${API_ENDPOINTS.PROVIDERS}/${providerToDelete.id}`, { method: 'DELETE' })
+      
+      // Remove from local state
       setProviders(providers.filter(p => p.id !== providerToDelete.id))
       setSuccess('Provider deleted successfully')
       setDeleteModalOpen(false)
       setProviderToDelete(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete provider')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete provider'
+      setError(errorMessage)
       console.error('Error deleting provider:', err)
     } finally {
       setSubmitting(false)
@@ -150,12 +172,44 @@ const Providers: React.FC = () => {
       setSubmitting(true)
       setError(null)
       
+      // Basic validation
+      const name = formData.get('name') as string
+      const cnpj = formData.get('cnpj') as string
+      const type = formData.get('type') as string
+      const address = formData.get('address') as string
+      const contact = formData.get('contact') as string
+      
+      // Validate required fields
+      if (!name || !cnpj || !type || !address || !contact) {
+        throw new Error('All required fields must be filled')
+      }
+      
+      // Validate CNPJ format
+      if (!/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(cnpj)) {
+        throw new Error('CNPJ must be in format: 00.000.000/0000-00')
+      }
+      
+      // Validate provider type
+      if (!providerTypes.includes(type)) {
+        throw new Error('Please select a valid provider type')
+      }
+      
+      // Validate address length
+      if (address.length < 10) {
+        throw new Error('Address must be at least 10 characters long')
+      }
+      
+      // Validate contact length
+      if (contact.length < 5) {
+        throw new Error('Contact name must be at least 5 characters long')
+      }
+      
       const providerData = {
-        name: formData.get('name') as string,
-        cnpj: formData.get('cnpj') as string,
-        type: formData.get('type') as string,
-        address: formData.get('address') as string,
-        contact: formData.get('contact') as string,
+        name,
+        cnpj,
+        type,
+        address,
+        contact,
         active: true,
       }
       
@@ -250,6 +304,7 @@ const Providers: React.FC = () => {
                   fullWidth
                   required
                   defaultValue={editingProvider?.name || ''}
+                  helperText="Minimum 3 characters"
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -260,17 +315,24 @@ const Providers: React.FC = () => {
                   fullWidth
                   required
                   defaultValue={editingProvider?.cnpj || ''}
+                  helperText="Format: 00.000.000/0000-00"
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  name="type"
-                  label="Type"
-                  placeholder="e.g., hospital, clinic, laboratory"
-                  fullWidth
-                  required
-                  defaultValue={editingProvider?.type || ''}
-                />
+                <FormControl fullWidth required>
+                  <InputLabel>Provider Type</InputLabel>
+                  <Select
+                    name="type"
+                    label="Provider Type"
+                    defaultValue={editingProvider?.type || 'hospital'}
+                  >
+                    {providerTypes.map((type) => (
+                      <MenuItem key={type} value={type}>
+                        {type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -280,24 +342,31 @@ const Providers: React.FC = () => {
                   fullWidth
                   required
                   defaultValue={editingProvider?.contact || ''}
+                  helperText="Minimum 5 characters"
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   name="address"
                   label="Address"
-                  placeholder="Enter full address"
+                  placeholder="Enter full address (minimum 10 characters)"
                   fullWidth
                   required
                   defaultValue={editingProvider?.address || ''}
+                  helperText="Address must be at least 10 characters long"
                 />
               </Grid>
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button type="submit" variant="contained">
-              {editingProvider ? 'Update' : 'Create'}
+            <Button onClick={handleClose} disabled={submitting}>Cancel</Button>
+            <Button 
+              type="submit" 
+              variant="contained"
+              disabled={submitting}
+              startIcon={submitting ? <CircularProgress size={20} /> : null}
+            >
+              {submitting ? 'Saving...' : (editingProvider ? 'Update' : 'Create')}
             </Button>
           </DialogActions>
         </form>

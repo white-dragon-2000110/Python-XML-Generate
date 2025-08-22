@@ -299,18 +299,7 @@ async def list_claims(
     
     try:
         # Log database query start
-        request_logger.log_database_operation("query_start", "claims", filters={
-            "patient_id": patient_id,
-            "provider_id": provider_id,
-            "plan_id": plan_id,
-            "status": status,
-            "start_date": start_date,
-            "end_date": end_date,
-            "min_value": min_value,
-            "max_value": max_value,
-            "skip": skip,
-            "limit": limit
-        })
+        request_logger.log_database_operation("query_start", "claims")
         
         query = db.query(Claim)
         
@@ -351,7 +340,7 @@ async def list_claims(
         
         # Log successful query
         duration = time.time() - start_time
-        request_logger.log_database_operation("query_complete", "claims", success=True, record_count=len(claims), total_count=total, duration=duration)
+        request_logger.log_database_operation("query_complete", "claims", success=True, duration=duration)
         
         return ClaimList(
             items=claims,

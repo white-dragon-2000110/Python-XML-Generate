@@ -127,15 +127,41 @@ const Patients: React.FC = () => {
       setSubmitting(true)
       setError(null)
       
+      // Basic validation
+      const name = formData.get('name') as string
+      const cpf = formData.get('cpf') as string
+      const birth_date = formData.get('birth_date') as string
+      const address = formData.get('address') as string
+      const phone = formData.get('phone') as string
+      const email = formData.get('email') as string
+      
+      // Validate required fields
+      if (!name || !cpf || !birth_date || !address || !phone || !email) {
+        throw new Error('All fields are required')
+      }
+      
+      // Validate CPF format
+      if (!/^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(cpf)) {
+        throw new Error('CPF must be in format: 000.000.000-00')
+      }
+      
+      // Validate email format
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        throw new Error('Please enter a valid email address')
+      }
+      
+      // Validate address length
+      if (address.length < 10) {
+        throw new Error('Address must be at least 10 characters long')
+      }
+      
       const patientData = {
-        name: formData.get('name') as string,
-        cpf: formData.get('cpf') as string,
-        birth_date: formData.get('birth_date') as string,
-        address: formData.get('address') as string,
-        phone: formData.get('phone') as string,
-        email: formData.get('email') as string,
-        gender: 'not_specified', // Default value
-        active: true,
+        name,
+        cpf,
+        birth_date,
+        address,
+        phone,
+        email,
       }
       
       if (editingPatient) {

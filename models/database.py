@@ -2,6 +2,7 @@ from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import QueuePool
+from sqlalchemy import text
 import os
 from dotenv import load_dotenv
 import pymysql
@@ -67,4 +68,16 @@ def close_db():
     """
     Close database connections
     """
-    engine.dispose() 
+    engine.dispose()
+
+def test_connection():
+    """
+    Test database connection
+    """
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(text("SELECT 1"))
+            return True
+    except Exception as e:
+        print(f"Database connection failed: {e}")
+        return False 

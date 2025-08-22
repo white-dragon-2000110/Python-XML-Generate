@@ -25,7 +25,6 @@ class HealthInsurance(Base):
     
     # Relationships
     contracts = relationship("Contract", back_populates="health_insurance")
-    claims = relationship("Claim", back_populates="health_insurance")
 
 class Contract(Base):
     """Contract between Health Insurance and Provider"""
@@ -45,31 +44,8 @@ class Contract(Base):
     health_insurance = relationship("HealthInsurance", back_populates="contracts")
     provider = relationship("Provider", back_populates="contracts")
 
-class Provider(Base):
-    """Healthcare Provider Model"""
-    __tablename__ = "providers"
-    __table_args__ = {'extend_existing': True}
-    
-    id = Column(Integer, primary_key=True, index=True)
-    cnpj = Column(String(18), unique=True, nullable=False, index=True)
-    name = Column(String(255), nullable=False)
-    trade_name = Column(String(255))
-    ans_code = Column(String(20), unique=True, nullable=False)
-    provider_type = Column(String(50), nullable=False)  # hospital, clinic, laboratory, etc.
-    address = Column(Text)
-    city = Column(String(100))
-    state = Column(String(2))
-    zip_code = Column(String(10))
-    phone = Column(String(20))
-    email = Column(String(255))
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    # Relationships
-    contracts = relationship("Contract", back_populates="provider")
-    claims = relationship("Claim", back_populates="provider")
-    professionals = relationship("Professional", back_populates="provider")
+# Provider model is defined in models/providers.py to avoid conflicts
+# This file only contains HealthInsurance and Contract models
 
 class Professional(Base):
     """Healthcare Professional Model"""
@@ -86,9 +62,8 @@ class Professional(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    # Relationships
+    # Relationships - Provider is defined in models/providers.py
     provider = relationship("Provider", back_populates="professionals")
-    claims = relationship("Claim", back_populates="professional")
 
 # Note: Patient and Claim models are defined in their respective files
 # models/patients.py and models/claims.py 

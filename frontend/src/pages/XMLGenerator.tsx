@@ -28,9 +28,8 @@ interface Claim {
   id: number
   patient_id: number
   provider_id: number
-  claim_number: string
+  value: number
   claim_date: string
-  total_amount: string
   status: string
 }
 
@@ -66,6 +65,17 @@ const XMLGenerator: React.FC = () => {
   useEffect(() => {
     loadData()
   }, [])
+
+  // Helper functions to get names from IDs
+  const getPatientName = (patientId: number) => {
+    const patient = patients.find(p => p.id === patientId)
+    return patient ? patient.name : `Patient #${patientId}`
+  }
+
+  const getProviderName = (providerId: number) => {
+    const provider = providers.find(p => p.id === providerId)
+    return provider ? provider.name : `Provider #${providerId}`
+  }
 
   const loadData = async () => {
     try {
@@ -124,13 +134,13 @@ const XMLGenerator: React.FC = () => {
       <ans:registroANS>123456</ans:registroANS>
     </ans:dadosPrestador>
     <ans:dataProcessamento>${new Date().toISOString().split('T')[0]}</ans:dataProcessamento>
-    <ans:numeroProtocolo>${claim.claim_number}</ans:numeroProtocolo>
+          <ans:numeroProtocolo>${claim.id}</ans:numeroProtocolo>
   </ans:cabecalho>
   <ans:corpo>
     <ans:dadosGuia>
       <ans:identificacaoGuia>
-        <ans:numeroGuiaPrestador>${claim.claim_number}</ans:numeroGuiaPrestador>
-        <ans:numeroGuiaOperadora>${claim.claim_number}</ans:numeroGuiaOperadora>
+        <ans:numeroGuiaPrestador>${claim.id}</ans:numeroGuiaPrestador>
+        <ans:numeroGuiaOperadora>${claim.id}</ans:numeroGuiaOperadora>
         <ans:dataAutorizacao>${claim.claim_date}</ans:dataAutorizacao>
         <ans:senha>123456</ans:senha>
         <ans:dataValidadeSenha>${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}</ans:dataValidadeSenha>
@@ -148,18 +158,18 @@ const XMLGenerator: React.FC = () => {
         <ans:enderecoPrestador>${provider.type}</ans:enderecoPrestador>
       </ans:dadosPrestador>
       <ans:dadosProcedimento>
-        <ans:codigoProcedimento>${claim.claim_number}</ans:codigoProcedimento>
-        <ans:descricaoProcedimento>Healthcare claim ${claim.claim_number}</ans:descricaoProcedimento>
+        <ans:codigoProcedimento>${claim.id}</ans:codigoProcedimento>
+        <ans:descricaoProcedimento>Healthcare claim ${claim.id}</ans:descricaoProcedimento>
         <ans:dataProcedimento>${claim.claim_date}</ans:dataProcedimento>
-        <ans:valorProcedimento>${claim.total_amount}</ans:valorProcedimento>
+        <ans:valorProcedimento>${claim.value}</ans:valorProcedimento>
       </ans:dadosProcedimento>
       <ans:diagnostico>
         <ans:codigoDiagnostico>Z00.0</ans:codigoDiagnostico>
         <ans:descricaoDiagnostico>General medical examination</ans:descricaoDiagnostico>
       </ans:diagnostico>
       <ans:valoresInformados>
-        <ans:valorTotalGeral>${claim.total_amount}</ans:valorTotalGeral>
-        <ans:valorTotalProcedimentos>${claim.total_amount}</ans:valorTotalProcedimentos>
+        <ans:valorTotalGeral>${claim.value}</ans:valorTotalGeral>
+        <ans:valorTotalProcedimentos>${claim.value}</ans:valorTotalProcedimentos>
       </ans:valoresInformados>
     </ans:dadosGuia>
   </ans:corpo>
@@ -169,7 +179,7 @@ const XMLGenerator: React.FC = () => {
       <ans:registroANS>123456</ans:registroANS>
     </ans:dadosPrestador>
     <ans:dataProcessamento>${new Date().toISOString().split('T')[0]}</ans:dataProcessamento>
-    <ans:valorTotalGeral>${claim.total_amount}</ans:valorTotalGeral>
+    <ans:valorTotalGeral>${claim.value}</ans:valorTotalGeral>
   </ans:rodape>
 </ans:mensagemTISS>`
       
@@ -302,9 +312,9 @@ const XMLGenerator: React.FC = () => {
                   onChange={(e) => setSelectedClaimId(e.target.value as number)}
                 >
                   {claims.map((claim) => (
-                    <MenuItem key={claim.id} value={claim.id}>
-                      Claim #{claim.claim_number} - ${claim.total_amount}
-                    </MenuItem>
+                                                                <MenuItem key={claim.id} value={claim.id}>
+                        Claim - {getPatientName(claim.patient_id)} - {getProviderName(claim.provider_id)}
+                      </MenuItem>
                   ))}
                 </Select>
               </FormControl>

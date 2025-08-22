@@ -4,6 +4,7 @@ from .patients import Patient
 from .providers import Provider, ProviderType
 from .health_plans import HealthPlan
 from .claims import Claim
+from .health_insurance import HealthInsurance, Contract, Professional
 
 __all__ = [
     "Base",
@@ -14,5 +15,8 @@ __all__ = [
     "Provider",
     "ProviderType",
     "HealthPlan",
-    "Claim"
+    "Claim",
+    "HealthInsurance",
+    "Contract",
+    "Professional"
 ] 
